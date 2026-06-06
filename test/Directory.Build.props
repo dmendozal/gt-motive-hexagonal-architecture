@@ -20,4 +20,8 @@
     <PackageReference Include="SonarAnalyzer.CSharp" />
   </ItemGroup>
 
+  <ItemGroup>
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-6c8g-7p36-r338" />
+  </ItemGroup>
+
 </Project>

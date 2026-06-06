@@ -70,16 +70,14 @@
         <PackageReference Update="IdentityModel.AspNetCore" Version="4.3.0" />
 
         <!-- Cosmos DB -->
-        <PackageReference Update="MongoDB.Bson" Version="2.19.0" />
-        <PackageReference Update="MongoDB.Driver" Version="2.19.0" />
+        <PackageReference Update="MongoDB.Bson" Version="3.8.1" />
+        <PackageReference Update="MongoDB.Driver" Version="3.8.1" />
         <PackageReference Update="Microsoft.Azure.Cosmos" Version="3.16.0" />
 
         <!-- misc -->
-        <PackageReference Update="Newtonsoft.Json" Version="12.0.2" />
+        <PackageReference Update="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Update="MediatR" Version="10.0.1" />
         <PackageReference Update="MediatR.Extensions.Microsoft.DependencyInjection" Version="10.0.1" />
-        <PackageReference Update="AutoMapper" Version="11.0.1" />
-        <PackageReference Update="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
         <PackageReference Update="Hellang.Middleware.ProblemDetails" Version="3.1.0" />
         <PackageReference Update="Acheve.Authentication.Events" Version="2.0.2" />
         <PackageReference Update="Swashbuckle.AspNetCore" Version="6.4.0" />
