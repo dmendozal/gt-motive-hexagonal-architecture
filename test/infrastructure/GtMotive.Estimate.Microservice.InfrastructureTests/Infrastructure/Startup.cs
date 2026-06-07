@@ -43,7 +43,7 @@ namespace GtMotive.Estimate.Microservice.InfrastructureTests.Infrastructure
             services.AddControllers(ApiConfiguration.ConfigureControllers)
                 .WithApiControllers();
 
-            services.AddBaseInfrastructure(true);
+            services.AddBaseInfrastructure(InfrastructureProvider.InMemory);
         }
     }
 }

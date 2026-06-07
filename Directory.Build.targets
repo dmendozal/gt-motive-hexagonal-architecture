@@ -97,6 +97,7 @@
         <PackageReference Update="coverlet.collector" Version="3.1.2" />
         <PackageReference Update="Microsoft.AspNetCore.TestHost" Version="9.0.0" />
         <PackageReference Update="Acheve.TestHost" Version="3.3.0" />
+        <PackageReference Update="Testcontainers.MongoDb" Version="4.8.1" />
         <PackageReference Update="Microsoft.Extensions.Hosting" Version="6.0.0" />
         <PackageReference Update="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
         <PackageReference Update="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.0" />

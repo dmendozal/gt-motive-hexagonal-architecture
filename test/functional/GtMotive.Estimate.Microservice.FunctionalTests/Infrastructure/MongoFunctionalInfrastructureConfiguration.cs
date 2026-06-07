@@ -4,7 +4,6 @@ using GtMotive.Estimate.Microservice.Infrastructure.Logging;
 using GtMotive.Estimate.Microservice.Infrastructure.MongoDb;
 using GtMotive.Estimate.Microservice.Infrastructure.MongoDb.Settings;
 using GtMotive.Estimate.Microservice.Infrastructure.Rentals;
-using GtMotive.Estimate.Microservice.Infrastructure.Telemetry;
 using GtMotive.Estimate.Microservice.Infrastructure.Time;
 using GtMotive.Estimate.Microservice.Infrastructure.Vehicles;
 using Microsoft.Extensions.Configuration;
@@ -18,13 +17,12 @@ namespace GtMotive.Estimate.Microservice.FunctionalTests.Infrastructure
         public static IServiceCollection AddMongoFunctionalInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<MongoDbSettings>(configuration.GetSection("MongoDb"));
-            services.AddLogging(logging => logging.AddConsole());
+            services.AddLogging(static logging => logging.AddConsole());
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddSingleton<IClock, SystemClock>();
             services.AddSingleton<MongoService>();
             services.AddSingleton<IVehicleRepository, MongoVehicleRepository>();
             services.AddSingleton<IRentalRepository, MongoRentalRepository>();
-            services.AddScoped<ITelemetry, NoOpTelemetry>();
 
             return services;
         }

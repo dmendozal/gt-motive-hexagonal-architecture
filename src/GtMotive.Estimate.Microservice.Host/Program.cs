@@ -65,7 +65,11 @@ builder.Services.Configure<MongoDbSettings>(builder.Configuration.GetSection("Mo
 builder.Services.AddControllers(ApiConfiguration.ConfigureControllers)
     .WithApiControllers();
 
-builder.Services.AddBaseInfrastructure(builder.Environment.IsDevelopment());
+var infrastructureProvider = GetInfrastructureProvider(builder.Configuration);
+
+ValidateInfrastructureConfiguration(builder.Configuration, infrastructureProvider);
+
+builder.Services.AddBaseInfrastructure(infrastructureProvider);
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -140,3 +144,42 @@ app.UseAuthorization();
 app.MapControllers();
 
 await app.RunAsync();
+
+static InfrastructureProvider GetInfrastructureProvider(IConfiguration configuration)
+{
+    var value = configuration["Infrastructure:Provider"];
+
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        throw new InvalidOperationException("Configuration key 'Infrastructure:Provider' is required.");
+    }
+
+    if (!Enum.TryParse(value, ignoreCase: true, out InfrastructureProvider provider))
+    {
+        throw new InvalidOperationException(
+            $"Invalid value '{value}' for 'Infrastructure:Provider'. Expected 'InMemory' or 'Mongo'.");
+    }
+
+    return provider;
+}
+
+static void ValidateInfrastructureConfiguration(IConfiguration configuration, InfrastructureProvider provider)
+{
+    if (provider != InfrastructureProvider.Mongo)
+    {
+        return;
+    }
+
+    var connectionString = configuration["MongoDb:ConnectionString"];
+    var databaseName = configuration["MongoDb:MongoDbDatabaseName"];
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new InvalidOperationException("Configuration key 'MongoDb:ConnectionString' is required when using Mongo.");
+    }
+
+    if (string.IsNullOrWhiteSpace(databaseName))
+    {
+        throw new InvalidOperationException("Configuration key 'MongoDb:MongoDbDatabaseName' is required when using Mongo.");
+    }
+}

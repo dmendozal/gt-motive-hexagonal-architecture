@@ -1,0 +1,14 @@
+.git
+.vs
+.idea
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/*.cache
+**/*.pdb
+**/*.mdb
+**/*.log
+test/
+docs/
+*.md

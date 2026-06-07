@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.Docker.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ProjectGuid>{A8B7B5B0-1CC0-4F64-9F0D-7D30DA28D1F3}</ProjectGuid>
+    <DockerTargetOS>Linux</DockerTargetOS>
+    <ProjectTypeGuids>{E53339B2-1760-4266-BE6C-1B52D14E0F37}</ProjectTypeGuids>
+    <ProjectVersion>2.1</ProjectVersion>
+    <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="src\GtMotive.Estimate.Microservice.Host\GtMotive.Estimate.Microservice.Host.csproj" />
+  </ItemGroup>
+</Project>

@@ -6,7 +6,6 @@ using GtMotive.Estimate.Microservice.Infrastructure.Interfaces;
 using GtMotive.Estimate.Microservice.Infrastructure.Logging;
 using GtMotive.Estimate.Microservice.Infrastructure.MongoDb;
 using GtMotive.Estimate.Microservice.Infrastructure.Rentals;
-using GtMotive.Estimate.Microservice.Infrastructure.Telemetry;
 using GtMotive.Estimate.Microservice.Infrastructure.Time;
 using GtMotive.Estimate.Microservice.Infrastructure.Vehicles;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,23 +19,25 @@ namespace GtMotive.Estimate.Microservice.Infrastructure
         [ExcludeFromCodeCoverage]
         public static IInfrastructureBuilder AddBaseInfrastructure(
             this IServiceCollection services,
-            bool isDevelopment)
+            InfrastructureProvider provider)
         {
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddSingleton<IClock, SystemClock>();
 
-            if (!isDevelopment)
+            if (provider == InfrastructureProvider.Mongo)
             {
                 services.AddSingleton<MongoService>();
                 services.AddSingleton<IVehicleRepository, MongoVehicleRepository>();
                 services.AddSingleton<IRentalRepository, MongoRentalRepository>();
-                services.AddScoped<ITelemetry, AppTelemetry>();
             }
-            else
+            else if (provider == InfrastructureProvider.InMemory)
             {
                 services.AddSingleton<IVehicleRepository, InMemoryVehicleRepository>();
                 services.AddSingleton<IRentalRepository, InMemoryRentalRepository>();
-                services.AddScoped<ITelemetry, NoOpTelemetry>();
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(provider), provider, "Unsupported infrastructure provider.");
             }
 
             return new InfrastructureBuilder(services);
