@@ -43,7 +43,7 @@ dotnet_style_prefer_inferred_tuple_names = true:suggestion
 dotnet_style_prefer_inferred_anonymous_type_member_names = true:suggestion
 dotnet_style_prefer_auto_properties = true:silent
 dotnet_style_prefer_conditional_expression_over_assignment = true:silent
-dotnet_style_prefer_conditional_expression_over_return = true:silent
+dotnet_style_prefer_conditional_expression_over_return = false:silent
 ###############################
 # Naming Conventions          #
 ###############################
@@ -125,6 +125,7 @@ csharp_preserve_single_line_blocks = true
 dotnet_analyzer_diagnostic.severity = error
 #IDE
 dotnet_diagnostic.IDE0022.severity = silent
+dotnet_diagnostic.IDE0028.severity = none
 dotnet_diagnostic.IDE0058.severity = none
 dotnet_diagnostic.IDE0130.severity = silent
 #Code Analysis 

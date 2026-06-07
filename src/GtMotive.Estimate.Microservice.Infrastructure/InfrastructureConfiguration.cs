@@ -1,9 +1,13 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.Domain.Interfaces;
 using GtMotive.Estimate.Microservice.Infrastructure.Interfaces;
 using GtMotive.Estimate.Microservice.Infrastructure.Logging;
+using GtMotive.Estimate.Microservice.Infrastructure.Rentals;
 using GtMotive.Estimate.Microservice.Infrastructure.Telemetry;
+using GtMotive.Estimate.Microservice.Infrastructure.Time;
+using GtMotive.Estimate.Microservice.Infrastructure.Vehicles;
 using Microsoft.Extensions.DependencyInjection;
 
 [assembly: CLSCompliant(false)]
@@ -18,6 +22,9 @@ namespace GtMotive.Estimate.Microservice.Infrastructure
             bool isDevelopment)
         {
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
+            services.AddSingleton<IClock, SystemClock>();
+            services.AddSingleton<IVehicleRepository, InMemoryVehicleRepository>();
+            services.AddSingleton<IRentalRepository, InMemoryRentalRepository>();
 
             if (!isDevelopment)
             {
