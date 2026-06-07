@@ -25,7 +25,7 @@ namespace GtMotive.Estimate.Microservice.InfrastructureTests.Infrastructure
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
+            app.UseEndpoints(static endpoints =>
             {
                 endpoints.MapControllers();
             });
