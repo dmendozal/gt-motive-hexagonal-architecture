@@ -1,45 +1,92 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
-using GtMotive.Estimate.Microservice.Api;
-using GtMotive.Estimate.Microservice.Infrastructure;
 using MediatR;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
+using Testcontainers.MongoDb;
 using Xunit;
 
 [assembly: CLSCompliant(false)]
 
 namespace GtMotive.Estimate.Microservice.FunctionalTests.Infrastructure
 {
-    internal sealed class CompositionRootTestFixture : IDisposable, IAsyncLifetime
+    public sealed class CompositionRootTestFixture : IDisposable, IAsyncLifetime
     {
-        private readonly ServiceProvider _serviceProvider;
+        private bool disposed;
 
-        public CompositionRootTestFixture()
-        {
-            var configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-                .AddEnvironmentVariables()
-                .Build();
+        private MongoDbContainer mongoDbContainer = default!;
 
-            var services = new ServiceCollection();
-            Configuration = configuration;
-            ConfigureServices(services);
-            services.AddSingleton<IConfiguration>(configuration);
-            _serviceProvider = services.BuildServiceProvider();
-        }
+        private MongoClient mongoClient = default!;
 
-        public IConfiguration Configuration { get; }
+        private string databaseName = default!;
+
+        public IConfiguration Configuration { get; private set; } = default!;
+
+        public TestServer Server { get; private set; } = default!;
 
         public async Task InitializeAsync()
         {
-            await Task.CompletedTask;
+            mongoDbContainer = new MongoDbBuilder()
+                .WithUsername(string.Empty)
+                .WithPassword(string.Empty)
+                .Build();
+
+            await mongoDbContainer.StartAsync().ConfigureAwait(false);
+
+            databaseName = $"functionaltests_{Guid.NewGuid():N}";
+            mongoClient = new MongoClient(mongoDbContainer.GetConnectionString());
+
+            Configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    ["MongoDb:ConnectionString"] = mongoDbContainer.GetConnectionString(),
+                    ["MongoDb:MongoDbDatabaseName"] = databaseName,
+                })
+                .Build();
+
+            var hostBuilder = new WebHostBuilder()
+                .UseContentRoot(Directory.GetCurrentDirectory())
+                .UseEnvironment("IntegrationTest")
+                .UseDefaultServiceProvider(static options => { options.ValidateScopes = true; })
+                .ConfigureAppConfiguration((_, builder) => { builder.AddConfiguration(Configuration); })
+                .UseStartup<Startup>();
+
+            Server = new TestServer(hostBuilder);
         }
 
         public async Task DisposeAsync()
         {
-            await Task.CompletedTask;
+            if (disposed)
+            {
+                return;
+            }
+
+            disposed = true;
+
+            Server?.Dispose();
+            mongoClient?.Dispose();
+
+            if (mongoDbContainer is not null)
+            {
+                await mongoDbContainer.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+
+        public async Task ResetDatabaseAsync()
+        {
+            if (mongoClient is null)
+            {
+                return;
+            }
+
+            await mongoClient.DropDatabaseAsync(databaseName).ConfigureAwait(false);
         }
 
         public async Task UsingHandlerForRequest<TRequest>(Func<IRequestHandler<TRequest, Unit>, Task> handlerAction)
@@ -47,10 +94,10 @@ namespace GtMotive.Estimate.Microservice.FunctionalTests.Infrastructure
         {
             ArgumentNullException.ThrowIfNull(handlerAction);
 
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = Server.Services.CreateScope();
             var handler = scope.ServiceProvider.GetRequiredService<IRequestHandler<TRequest, Unit>>();
 
-            await handlerAction.Invoke(handler);
+            await handlerAction.Invoke(handler).ConfigureAwait(false);
         }
 
         public async Task UsingHandlerForRequestResponse<TRequest, TResponse>(Func<IRequestHandler<TRequest, TResponse>, Task> handlerAction)
@@ -58,42 +105,25 @@ namespace GtMotive.Estimate.Microservice.FunctionalTests.Infrastructure
         {
             ArgumentNullException.ThrowIfNull(handlerAction);
 
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = Server.Services.CreateScope();
             var handler = scope.ServiceProvider.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
 
-            if (handler == null)
-            {
-                Debug.Fail("The requested handler has not been registered");
-            }
-
-            await handlerAction.Invoke(handler);
+            await handlerAction.Invoke(handler).ConfigureAwait(false);
         }
 
         public async Task UsingRepository<TRepository>(Func<TRepository, Task> handlerAction)
         {
             ArgumentNullException.ThrowIfNull(handlerAction);
 
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = Server.Services.CreateScope();
             var handler = scope.ServiceProvider.GetRequiredService<TRepository>();
 
-            if (handler == null)
-            {
-                Debug.Fail("The requested handler has not been registered");
-            }
-
-            await handlerAction.Invoke(handler);
+            await handlerAction.Invoke(handler).ConfigureAwait(false);
         }
 
         public void Dispose()
         {
-            _serviceProvider.Dispose();
-        }
-
-        private static void ConfigureServices(IServiceCollection services)
-        {
-            services.AddApiDependencies();
-            services.AddLogging();
-            services.AddBaseInfrastructure(true);
+            DisposeAsync().GetAwaiter().GetResult();
         }
     }
 }

@@ -23,6 +23,9 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
         <PackageReference Include="Microsoft.Data.SqlClient" />
         <PackageReference Include="Respawn" />
+        <PackageReference Include="Acheve.TestHost" />
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+        <PackageReference Include="Testcontainers.MongoDb" />
     </ItemGroup>
 
     <ItemGroup>

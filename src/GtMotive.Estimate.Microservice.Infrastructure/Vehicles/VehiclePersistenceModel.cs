@@ -2,6 +2,7 @@
 using GtMotive.Estimate.Microservice.Domain.Vehicles.AggregateRoots;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.Enums;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.ValueObjects;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace GtMotive.Estimate.Microservice.Infrastructure.Vehicles
@@ -9,6 +10,7 @@ namespace GtMotive.Estimate.Microservice.Infrastructure.Vehicles
     [BsonIgnoreExtraElements]
     public sealed class VehiclePersistenceModel
     {
+        [BsonRepresentation(BsonType.String)]
         public Guid Id { get; set; }
 
         public string Vin { get; set; } = string.Empty;

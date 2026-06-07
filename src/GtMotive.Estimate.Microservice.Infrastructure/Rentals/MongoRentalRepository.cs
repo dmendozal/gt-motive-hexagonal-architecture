@@ -8,10 +8,28 @@ using MongoDB.Driver;
 
 namespace GtMotive.Estimate.Microservice.Infrastructure.Rentals
 {
-    public sealed class MongoRentalRepository(MongoService mongoService) : IRentalRepository
+    public sealed class MongoRentalRepository : IRentalRepository
     {
         private const string CollectionName = "rentals";
-        private readonly IMongoCollection<RentalPersistenceModel> _collection = mongoService.Database.GetCollection<RentalPersistenceModel>(CollectionName);
+        private readonly IMongoCollection<RentalPersistenceModel> _collection;
+
+        public MongoRentalRepository(MongoService mongoService)
+        {
+            ArgumentNullException.ThrowIfNull(mongoService);
+
+            _collection = mongoService.Database.GetCollection<RentalPersistenceModel>(CollectionName);
+
+            var activeRentalIndex = new CreateIndexModel<RentalPersistenceModel>(
+                Builders<RentalPersistenceModel>.IndexKeys.Ascending(static document => document.PersonDocumentId),
+                new CreateIndexOptions<RentalPersistenceModel>
+                {
+                    Unique = true,
+                    Name = "ux_rentals_active_person_document_id",
+                    PartialFilterExpression = Builders<RentalPersistenceModel>.Filter.Eq(static document => document.Status, RentalStatus.Active),
+                });
+
+            _ = _collection.Indexes.CreateOne(activeRentalIndex);
+        }
 
         public async Task<bool> HasActiveRentalForPerson(string personDocumentId)
         {

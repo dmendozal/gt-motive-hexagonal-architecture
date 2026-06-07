@@ -1,6 +1,7 @@
 ﻿using System;
 using GtMotive.Estimate.Microservice.Domain.Rentals.AggregateRoots;
 using GtMotive.Estimate.Microservice.Domain.Rentals.Enums;
+using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace GtMotive.Estimate.Microservice.Infrastructure.Rentals
@@ -8,8 +9,10 @@ namespace GtMotive.Estimate.Microservice.Infrastructure.Rentals
     [BsonIgnoreExtraElements]
     public sealed class RentalPersistenceModel
     {
+        [BsonRepresentation(BsonType.String)]
         public Guid Id { get; set; }
 
+        [BsonRepresentation(BsonType.String)]
         public Guid VehicleId { get; set; }
 
         public string PersonDocumentId { get; set; } = string.Empty;

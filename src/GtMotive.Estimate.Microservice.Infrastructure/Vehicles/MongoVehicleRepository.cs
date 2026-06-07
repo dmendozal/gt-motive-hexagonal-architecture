@@ -10,10 +10,27 @@ using MongoDB.Driver;
 
 namespace GtMotive.Estimate.Microservice.Infrastructure.Vehicles
 {
-    public sealed class MongoVehicleRepository(MongoService mongoService) : IVehicleRepository
+    public sealed class MongoVehicleRepository : IVehicleRepository
     {
         private const string CollectionName = "vehicles";
-        private readonly IMongoCollection<VehiclePersistenceModel> _collection = mongoService.Database.GetCollection<VehiclePersistenceModel>(CollectionName);
+        private readonly IMongoCollection<VehiclePersistenceModel> _collection;
+
+        public MongoVehicleRepository(MongoService mongoService)
+        {
+            ArgumentNullException.ThrowIfNull(mongoService);
+
+            _collection = mongoService.Database.GetCollection<VehiclePersistenceModel>(CollectionName);
+
+            var vinIndex = new CreateIndexModel<VehiclePersistenceModel>(
+                Builders<VehiclePersistenceModel>.IndexKeys.Ascending(static document => document.Vin),
+                new CreateIndexOptions
+                {
+                    Unique = true,
+                    Name = "ux_vehicles_vin",
+                });
+
+            _ = _collection.Indexes.CreateOne(vinIndex);
+        }
 
         public async Task<bool> ExistsByVin(Vin vin)
         {
