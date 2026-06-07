@@ -1,4 +1,4 @@
-﻿using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+﻿using GtMotive.Estimate.Microservice.Domain.Exceptions;
 
 namespace GtMotive.Estimate.Microservice.Domain.People.ValueObjects
 {
@@ -26,7 +26,7 @@ namespace GtMotive.Estimate.Microservice.Domain.People.ValueObjects
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new DomainException(Errors.PersonDocumentIdRequired);
+                throw new PersonDocumentIdRequiredException();
             }
 
             return new DocumentId(value);

@@ -3,7 +3,7 @@
     /// <summary>
     /// Interface to define the Standard Output Port.
     /// </summary>
-    /// <typeparam name="TUseCaseOutput">Tyoe of the use case response dto.</typeparam>
+    /// <typeparam name="TUseCaseOutput">Type of the use case response dto.</typeparam>
     public interface IOutputPortStandard<in TUseCaseOutput>
         where TUseCaseOutput : IUseCaseOutput
     {

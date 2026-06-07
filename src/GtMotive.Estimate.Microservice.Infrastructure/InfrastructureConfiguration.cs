@@ -4,6 +4,7 @@ using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.Domain.Interfaces;
 using GtMotive.Estimate.Microservice.Infrastructure.Interfaces;
 using GtMotive.Estimate.Microservice.Infrastructure.Logging;
+using GtMotive.Estimate.Microservice.Infrastructure.MongoDb;
 using GtMotive.Estimate.Microservice.Infrastructure.Rentals;
 using GtMotive.Estimate.Microservice.Infrastructure.Telemetry;
 using GtMotive.Estimate.Microservice.Infrastructure.Time;
@@ -23,15 +24,18 @@ namespace GtMotive.Estimate.Microservice.Infrastructure
         {
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddSingleton<IClock, SystemClock>();
-            services.AddSingleton<IVehicleRepository, InMemoryVehicleRepository>();
-            services.AddSingleton<IRentalRepository, InMemoryRentalRepository>();
 
             if (!isDevelopment)
             {
+                services.AddSingleton<MongoService>();
+                services.AddSingleton<IVehicleRepository, MongoVehicleRepository>();
+                services.AddSingleton<IRentalRepository, MongoRentalRepository>();
                 services.AddScoped<ITelemetry, AppTelemetry>();
             }
             else
             {
+                services.AddSingleton<IVehicleRepository, InMemoryVehicleRepository>();
+                services.AddSingleton<IRentalRepository, InMemoryRentalRepository>();
                 services.AddScoped<ITelemetry, NoOpTelemetry>();
             }
 

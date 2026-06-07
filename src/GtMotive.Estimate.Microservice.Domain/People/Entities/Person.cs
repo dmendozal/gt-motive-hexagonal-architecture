@@ -1,5 +1,5 @@
 ﻿using System;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.People.ValueObjects;
 
 namespace GtMotive.Estimate.Microservice.Domain.People.Entities
@@ -45,7 +45,7 @@ namespace GtMotive.Estimate.Microservice.Domain.People.Entities
 
             if (string.IsNullOrWhiteSpace(name))
             {
-                throw new DomainException(Errors.PersonNameRequired);
+                throw new PersonNameRequiredException();
             }
 
             return new Person(personId, personDocumentId, name);

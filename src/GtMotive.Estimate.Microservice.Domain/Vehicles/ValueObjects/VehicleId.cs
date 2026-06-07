@@ -1,5 +1,5 @@
-﻿using System;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using System;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 
 namespace GtMotive.Estimate.Microservice.Domain.Vehicles.ValueObjects
 {
@@ -27,7 +27,7 @@ namespace GtMotive.Estimate.Microservice.Domain.Vehicles.ValueObjects
         {
             if (value == Guid.Empty)
             {
-                throw new DomainException(Errors.VehicleIdRequired);
+                throw new VehicleIdRequiredException();
             }
 
             return new VehicleId(value);

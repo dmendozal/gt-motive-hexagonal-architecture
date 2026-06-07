@@ -5,7 +5,7 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.Vehicles.CreateVehicle
     /// <summary>
     /// Output port for the creation vehicle use case.
     /// </summary>
-    public interface ICreateVehicleOutputPort : IOutputPortStandard<CreateVehicleOutput>
+    public interface ICreateVehicleOutputPort : IOutputPortStandard<CreateVehicleOutput>, IOutputPortConflict
     {
     }
 }

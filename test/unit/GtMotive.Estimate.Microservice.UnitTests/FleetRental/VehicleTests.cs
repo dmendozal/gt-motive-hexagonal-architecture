@@ -1,7 +1,6 @@
 ﻿using System;
 using FluentAssertions;
-using GtMotive.Estimate.Microservice.Domain;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.AggregateRoots;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.Enums;
 using Xunit;
@@ -24,8 +23,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
                 manufacturingDate,
                 currentDate);
 
-            act.Should().Throw<DomainException>()
-                .WithMessage(Errors.VehicleTooOld);
+            act.Should().Throw<VehicleManufacturingDateExceededException>();
         }
 
         [Fact]

@@ -2,8 +2,7 @@
 using System.Threading.Tasks;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.ApplicationCore.UseCases;
-using GtMotive.Estimate.Microservice.Domain;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.Rentals.AggregateRoots;
 
 namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.RentVehicle
@@ -33,10 +32,16 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.RentVehicle
         {
             ArgumentNullException.ThrowIfNull(input);
 
-            var vehicle = await vehicleRepository.GetById(input.VehicleId) ?? throw new DomainException(Errors.VehicleNotFound);
+            var vehicle = await vehicleRepository.GetById(input.VehicleId);
+            if (vehicle is null)
+            {
+                outputPort.NotFoundHandle("Vehicle was not found.");
+                return;
+            }
+
             if (await rentalRepository.HasActiveRentalForPerson(input.PersonDocumentId))
             {
-                throw new DomainException(Errors.PersonAlreadyHasActiveRental);
+                throw new PersonAlreadyHasActiveRentalException();
             }
 
             vehicle.Rent();

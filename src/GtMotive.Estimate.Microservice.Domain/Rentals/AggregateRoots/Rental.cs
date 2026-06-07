@@ -1,5 +1,5 @@
 ﻿using System;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.Rentals.Enums;
 
 namespace GtMotive.Estimate.Microservice.Domain.Rentals.AggregateRoots
@@ -77,25 +77,54 @@ namespace GtMotive.Estimate.Microservice.Domain.Rentals.AggregateRoots
         {
             if (id == Guid.Empty)
             {
-                throw new DomainException(Errors.RentalIdRequired);
+                throw new RentalIdRequiredException();
             }
 
             if (vehicleId == Guid.Empty)
             {
-                throw new DomainException(Errors.VehicleIdRequired);
+                throw new VehicleIdRequiredException();
             }
 
             if (string.IsNullOrWhiteSpace(personDocumentId))
             {
-                throw new DomainException(Errors.PersonDocumentIdRequired);
+                throw new PersonDocumentIdRequiredException();
             }
 
             if (string.IsNullOrWhiteSpace(personName))
             {
-                throw new DomainException(Errors.PersonNameRequired);
+                throw new PersonNameRequiredException();
             }
 
             return new Rental(id, vehicleId, personDocumentId, personName, rentedAt);
+        }
+
+        /// <summary>
+        /// Rehydrates a persisted rental.
+        /// </summary>
+        /// <param name="id">The rental identifier.</param>
+        /// <param name="vehicleId">The vehicle identifier.</param>
+        /// <param name="personDocumentId">The person document identifier.</param>
+        /// <param name="personName">The person name.</param>
+        /// <param name="rentedAt">The rent timestamp.</param>
+        /// <param name="status">The rental status.</param>
+        /// <param name="returnedAt">The return timestamp.</param>
+        /// <returns>The rehydrated rental.</returns>
+        public static Rental Rehydrate(
+            Guid id,
+            Guid vehicleId,
+            string personDocumentId,
+            string personName,
+            DateTime rentedAt,
+            RentalStatus status,
+            DateTime? returnedAt)
+        {
+            var rental = new Rental(id, vehicleId, personDocumentId, personName, rentedAt)
+            {
+                Status = status,
+                ReturnedAt = returnedAt,
+            };
+
+            return rental;
         }
 
         /// <summary>
@@ -107,12 +136,12 @@ namespace GtMotive.Estimate.Microservice.Domain.Rentals.AggregateRoots
         {
             if (Status == RentalStatus.Returned)
             {
-                throw new DomainException(Errors.RentalAlreadyReturned);
+                throw new RentalAlreadyReturnedException();
             }
 
             if (PersonDocumentId != personDocumentId)
             {
-                throw new DomainException(Errors.RentalDoesNotBelongToPerson);
+                throw new RentalDoesNotBelongToPersonException();
             }
 
             Status = RentalStatus.Returned;

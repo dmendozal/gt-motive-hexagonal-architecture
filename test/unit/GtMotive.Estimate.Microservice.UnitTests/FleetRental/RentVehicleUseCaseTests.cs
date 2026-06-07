@@ -4,8 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.ApplicationCore.Rentals.RentVehicle;
-using GtMotive.Estimate.Microservice.Domain;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.Rentals.AggregateRoots;
 using GtMotive.Estimate.Microservice.Domain.Rentals.Enums;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.AggregateRoots;
@@ -38,7 +37,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
         }
 
         [Fact]
-        public async Task ExecuteWhenVehicleDoesNotExistThrowsDomainException()
+        public async Task ExecuteWhenVehicleDoesNotExistReturnsNotFound()
         {
             var vehicleRepository = new VehicleRepositoryStub();
             var rentalRepository = new RentalRepositoryStub();
@@ -46,10 +45,9 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
             var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
             var useCase = new RentVehicleUseCase(vehicleRepository, rentalRepository, clock, outputPort);
 
-            Func<Task> act = () => useCase.Execute(new RentVehicleInput(Guid.NewGuid(), "12345678A", "Jane Doe"));
+            await useCase.Execute(new RentVehicleInput(Guid.NewGuid(), "12345678A", "Jane Doe"));
 
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage(Errors.VehicleNotFound);
+            outputPort.NotFoundMessage.Should().Be("Vehicle was not found.");
             outputPort.StandardOutput.Should().BeNull();
             rentalRepository.Rentals.Should().BeEmpty();
         }
@@ -73,8 +71,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
 
             Func<Task> act = () => useCase.Execute(new RentVehicleInput(vehicle.Id.Value, "12345678A", "Jane Doe"));
 
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage(Errors.PersonAlreadyHasActiveRental);
+            await act.Should().ThrowAsync<PersonAlreadyHasActiveRentalException>();
             outputPort.StandardOutput.Should().BeNull();
             vehicle.Status.Should().Be(VehicleStatus.Available);
         }
@@ -93,8 +90,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
 
             Func<Task> act = () => useCase.Execute(new RentVehicleInput(vehicle.Id.Value, "12345678A", "Jane Doe"));
 
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage(Errors.VehicleAlreadyRented);
+            await act.Should().ThrowAsync<VehicleAlreadyRentedException>();
             outputPort.StandardOutput.Should().BeNull();
             rentalRepository.Rentals.Should().BeEmpty();
         }
@@ -127,9 +123,16 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
         {
             public RentVehicleOutput StandardOutput { get; private set; }
 
+            public string NotFoundMessage { get; private set; }
+
             public void StandardHandle(RentVehicleOutput response)
             {
                 StandardOutput = response;
+            }
+
+            public void NotFoundHandle(string message)
+            {
+                NotFoundMessage = message;
             }
         }
 

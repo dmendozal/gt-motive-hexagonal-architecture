@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using GtMotive.Estimate.Microservice.Api.UseCases;
 using GtMotive.Estimate.Microservice.ApplicationCore.Vehicles.CreateVehicle;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +20,14 @@ namespace GtMotive.Estimate.Microservice.Api.Vehicles.CreateVehicle
 
             var createVehicleResponse = new CreateVehicleResponse(response.VehicleId, response.Vin);
             ActionResult = new CreatedResult($"/vehicles/{createVehicleResponse.VehicleId}", createVehicleResponse);
+        }
+
+        /// <inheritdoc />
+        public void ConflictHandle(string message)
+        {
+            ArgumentNullException.ThrowIfNull(message);
+
+            ActionResult = new ConflictObjectResult(new { detail = message });
         }
     }
 }

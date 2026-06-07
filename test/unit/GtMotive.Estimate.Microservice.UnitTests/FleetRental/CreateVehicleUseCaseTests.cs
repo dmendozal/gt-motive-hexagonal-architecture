@@ -4,8 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.ApplicationCore.Vehicles.CreateVehicle;
-using GtMotive.Estimate.Microservice.Domain;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.AggregateRoots;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.Enums;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.ValueObjects;
@@ -33,7 +32,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
         }
 
         [Fact]
-        public async Task ExecuteWhenVinAlreadyExistsThrowsDomainException()
+        public async Task ExecuteWhenVinAlreadyExistsReturnsConflict()
         {
             var repository = new VehicleRepositoryStub();
             var clock = new ClockStub(new DateOnly(2026, 6, 7));
@@ -49,10 +48,9 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
             await repository.Add(existingVehicle);
             var input = new CreateVehicleInput("VIN-001", "Ford", "Focus", new DateOnly(2024, 2, 20));
 
-            Func<Task> act = () => useCase.Execute(input);
+            await useCase.Execute(input);
 
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage(Errors.DuplicateVehicle);
+            outputPort.ConflictMessage.Should().Be("Vehicle already exists.");
             outputPort.StandardOutput.Should().BeNull();
             repository.Vehicles.Should().ContainSingle();
         }
@@ -68,8 +66,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
 
             Func<Task> act = () => useCase.Execute(input);
 
-            await act.Should().ThrowAsync<DomainException>()
-                .WithMessage(Errors.VehicleTooOld);
+            await act.Should().ThrowAsync<VehicleManufacturingDateExceededException>();
             outputPort.StandardOutput.Should().BeNull();
             repository.Vehicles.Should().BeEmpty();
         }
@@ -91,9 +88,16 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
         {
             public CreateVehicleOutput StandardOutput { get; private set; }
 
+            public string ConflictMessage { get; private set; }
+
             public void StandardHandle(CreateVehicleOutput response)
             {
                 StandardOutput = response;
+            }
+
+            public void ConflictHandle(string message)
+            {
+                ConflictMessage = message;
             }
         }
 

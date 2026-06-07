@@ -1,5 +1,5 @@
 ﻿using System;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 
 namespace GtMotive.Estimate.Microservice.Domain.People.ValueObjects
 {
@@ -27,7 +27,7 @@ namespace GtMotive.Estimate.Microservice.Domain.People.ValueObjects
         {
             if (value == Guid.Empty)
             {
-                throw new DomainException(Errors.PersonIdRequired);
+                throw new PersonIdRequiredException();
             }
 
             return new PersonId(value);

@@ -1,7 +1,6 @@
 ﻿using System;
 using FluentAssertions;
-using GtMotive.Estimate.Microservice.Domain;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.People.Entities;
 using Xunit;
 
@@ -22,8 +21,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
         {
             Action act = static () => Person.Create(Guid.NewGuid(), string.Empty, "Jane Doe");
 
-            act.Should().Throw<DomainException>()
-                .WithMessage(Errors.PersonDocumentIdRequired);
+            act.Should().Throw<PersonDocumentIdRequiredException>();
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using System;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
+using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.Enums;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.ValueObjects;
 
@@ -73,20 +73,46 @@ namespace GtMotive.Estimate.Microservice.Domain.Vehicles.AggregateRoots
 
             if (string.IsNullOrWhiteSpace(brand))
             {
-                throw new DomainException(Errors.VehicleBrandRequired);
+                throw new VehicleBrandRequiredException();
             }
 
             if (string.IsNullOrWhiteSpace(model))
             {
-                throw new DomainException(Errors.VehicleModelRequired);
+                throw new VehicleModelRequiredException();
             }
 
             if (manufacturingDate < currentDate.AddYears(-5))
             {
-                throw new DomainException(Errors.VehicleTooOld);
+                throw new VehicleManufacturingDateExceededException();
             }
 
             return new Vehicle(vehicleId, vehicleVin, brand, model, manufacturingDate);
+        }
+
+        /// <summary>
+        /// Rehydrates a persisted vehicle.
+        /// </summary>
+        /// <param name="id">The vehicle identifier.</param>
+        /// <param name="vin">The vehicle VIN.</param>
+        /// <param name="brand">The vehicle brand.</param>
+        /// <param name="model">The vehicle model.</param>
+        /// <param name="manufacturingDate">The manufacturing date.</param>
+        /// <param name="status">The vehicle status.</param>
+        /// <returns>The rehydrated vehicle.</returns>
+        public static Vehicle Rehydrate(
+            VehicleId id,
+            Vin vin,
+            string brand,
+            string model,
+            DateOnly manufacturingDate,
+            VehicleStatus status)
+        {
+            var vehicle = new Vehicle(id, vin, brand, model, manufacturingDate)
+            {
+                Status = status,
+            };
+
+            return vehicle;
         }
 
         /// <summary>
@@ -96,7 +122,7 @@ namespace GtMotive.Estimate.Microservice.Domain.Vehicles.AggregateRoots
         {
             if (Status != VehicleStatus.Available)
             {
-                throw new DomainException(Errors.VehicleAlreadyRented);
+                throw new VehicleAlreadyRentedException();
             }
 
             Status = VehicleStatus.Rented;

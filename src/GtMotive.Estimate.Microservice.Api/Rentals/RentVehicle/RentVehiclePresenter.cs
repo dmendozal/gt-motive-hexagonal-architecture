@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using GtMotive.Estimate.Microservice.Api.UseCases;
 using GtMotive.Estimate.Microservice.ApplicationCore.Rentals.RentVehicle;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +25,14 @@ namespace GtMotive.Estimate.Microservice.Api.Rentals.RentVehicle
                 response.RentedAt);
 
             ActionResult = new CreatedResult($"/rentals/{rentVehicleResponse.RentalId}", rentVehicleResponse);
+        }
+
+        /// <inheritdoc />
+        public void NotFoundHandle(string message)
+        {
+            ArgumentNullException.ThrowIfNull(message);
+
+            ActionResult = new NotFoundObjectResult(new { detail = message });
         }
     }
 }

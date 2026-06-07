@@ -2,8 +2,6 @@
 using System.Threading.Tasks;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.ApplicationCore.UseCases;
-using GtMotive.Estimate.Microservice.Domain;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
 
 namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.ReturnRental
 {
@@ -32,7 +30,13 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.ReturnRental
         {
             ArgumentNullException.ThrowIfNull(input);
 
-            var rental = await rentalRepository.GetById(input.RentalId) ?? throw new DomainException(Errors.RentalNotFound);
+            var rental = await rentalRepository.GetById(input.RentalId);
+            if (rental is null)
+            {
+                outputPort.NotFoundHandle("Rental not found.");
+                return;
+            }
+
             var returnedAt = clock.GetCurrentUtcDateTime();
             rental.Return(input.PersonDocumentId, returnedAt);
 

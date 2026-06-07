@@ -2,8 +2,6 @@
 using System.Threading.Tasks;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.ApplicationCore.UseCases;
-using GtMotive.Estimate.Microservice.Domain;
-using GtMotive.Estimate.Microservice.Domain.Common.Errors;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.AggregateRoots;
 
 namespace GtMotive.Estimate.Microservice.ApplicationCore.Vehicles.CreateVehicle
@@ -42,7 +40,8 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.Vehicles.CreateVehicle
 
             if (await vehicleRepository.ExistsByVin(vehicle.Vin))
             {
-                throw new DomainException(Errors.DuplicateVehicle);
+                outputPort.ConflictHandle("Vehicle already exists.");
+                return;
             }
 
             await vehicleRepository.Add(vehicle);
