@@ -4,7 +4,7 @@ using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.People.Entities;
 using Xunit;
 
-namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
+namespace GtMotive.Estimate.Microservice.UnitTests.Domain
 {
     public sealed class PersonTests
     {

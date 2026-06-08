@@ -5,7 +5,7 @@ using GtMotive.Estimate.Microservice.Domain.Vehicles.AggregateRoots;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.Enums;
 using Xunit;
 
-namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
+namespace GtMotive.Estimate.Microservice.UnitTests.Domain
 {
     public sealed class VehicleTests
     {

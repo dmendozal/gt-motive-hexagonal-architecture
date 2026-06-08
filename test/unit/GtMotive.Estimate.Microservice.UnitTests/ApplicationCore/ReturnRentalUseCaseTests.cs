@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
-using GtMotive.Estimate.Microservice.ApplicationCore.Rentals.RentVehicle;
+using GtMotive.Estimate.Microservice.ApplicationCore.Rentals.ReturnRental;
 using GtMotive.Estimate.Microservice.Domain.Exceptions;
 using GtMotive.Estimate.Microservice.Domain.Rentals.AggregateRoots;
 using GtMotive.Estimate.Microservice.Domain.Rentals.Enums;
@@ -12,87 +12,95 @@ using GtMotive.Estimate.Microservice.Domain.Vehicles.Enums;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.ValueObjects;
 using Xunit;
 
-namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
+namespace GtMotive.Estimate.Microservice.UnitTests.ApplicationCore
 {
-    public sealed class RentVehicleUseCaseTests
+    public sealed class ReturnRentalUseCaseTests
     {
         [Fact]
-        public async Task ExecuteWhenVehicleIsAvailableAndPersonHasNoActiveRentalCreatesRentalAndRentsVehicle()
+        public async Task ExecuteWhenRentalIsActiveAndBelongsToPersonReturnsRentalAndMakesVehicleAvailable()
         {
-            var vehicleRepository = new VehicleRepositoryStub();
             var rentalRepository = new RentalRepositoryStub();
-            var outputPort = new RentVehicleOutputPortSpy();
+            var vehicleRepository = new VehicleRepositoryStub();
+            var outputPort = new ReturnRentalOutputPortSpy();
             var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
-            var useCase = new RentVehicleUseCase(vehicleRepository, rentalRepository, clock, outputPort);
+            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, outputPort);
             var vehicle = CreateVehicle("VIN-001");
+            vehicle.Rent();
             await vehicleRepository.Add(vehicle);
-
-            await useCase.Execute(new RentVehicleInput(vehicle.Id.Value, "12345678A", "Jane Doe"));
-
-            outputPort.StandardOutput.Should().NotBeNull();
-            outputPort.StandardOutput.VehicleId.Should().Be(vehicle.Id.Value);
-            outputPort.StandardOutput.PersonDocumentId.Should().Be("12345678A");
-            vehicle.Status.Should().Be(VehicleStatus.Rented);
-            rentalRepository.Rentals.Should().ContainSingle();
-        }
-
-        [Fact]
-        public async Task ExecuteWhenVehicleDoesNotExistReturnsNotFound()
-        {
-            var vehicleRepository = new VehicleRepositoryStub();
-            var rentalRepository = new RentalRepositoryStub();
-            var outputPort = new RentVehicleOutputPortSpy();
-            var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
-            var useCase = new RentVehicleUseCase(vehicleRepository, rentalRepository, clock, outputPort);
-
-            await useCase.Execute(new RentVehicleInput(Guid.NewGuid(), "12345678A", "Jane Doe"));
-
-            outputPort.NotFoundMessage.Should().Be("Vehicle was not found.");
-            outputPort.StandardOutput.Should().BeNull();
-            rentalRepository.Rentals.Should().BeEmpty();
-        }
-
-        [Fact]
-        public async Task ExecuteWhenPersonAlreadyHasActiveRentalThrowsDomainException()
-        {
-            var vehicleRepository = new VehicleRepositoryStub();
-            var rentalRepository = new RentalRepositoryStub();
-            var outputPort = new RentVehicleOutputPortSpy();
-            var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
-            var useCase = new RentVehicleUseCase(vehicleRepository, rentalRepository, clock, outputPort);
-            var vehicle = CreateVehicle("VIN-001");
-            await vehicleRepository.Add(vehicle);
-            await rentalRepository.Add(Rental.Create(
+            var rental = Rental.Create(
                 Guid.NewGuid(),
-                Guid.NewGuid(),
+                vehicle.Id.Value,
                 "12345678A",
                 "Jane Doe",
-                clock.GetCurrentUtcDateTime()));
+                clock.GetCurrentUtcDateTime());
+            await rentalRepository.Add(rental);
 
-            Func<Task> act = () => useCase.Execute(new RentVehicleInput(vehicle.Id.Value, "12345678A", "Jane Doe"));
+            await useCase.Execute(new ReturnRentalInput(rental.Id, "12345678A"));
 
-            await act.Should().ThrowAsync<PersonAlreadyHasActiveRentalException>();
-            outputPort.StandardOutput.Should().BeNull();
+            outputPort.StandardOutput.Should().NotBeNull();
+            outputPort.StandardOutput.RentalId.Should().Be(rental.Id);
+            rental.Status.Should().Be(RentalStatus.Returned);
             vehicle.Status.Should().Be(VehicleStatus.Available);
         }
 
         [Fact]
-        public async Task ExecuteWhenVehicleIsAlreadyRentedThrowsDomainException()
+        public async Task ExecuteWhenRentalDoesNotExistReturnsNotFound()
         {
-            var vehicleRepository = new VehicleRepositoryStub();
             var rentalRepository = new RentalRepositoryStub();
-            var outputPort = new RentVehicleOutputPortSpy();
+            var vehicleRepository = new VehicleRepositoryStub();
+            var outputPort = new ReturnRentalOutputPortSpy();
             var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
-            var useCase = new RentVehicleUseCase(vehicleRepository, rentalRepository, clock, outputPort);
-            var vehicle = CreateVehicle("VIN-001");
-            vehicle.Rent();
-            await vehicleRepository.Add(vehicle);
+            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, outputPort);
 
-            Func<Task> act = () => useCase.Execute(new RentVehicleInput(vehicle.Id.Value, "12345678A", "Jane Doe"));
+            await useCase.Execute(new ReturnRentalInput(Guid.NewGuid(), "12345678A"));
 
-            await act.Should().ThrowAsync<VehicleAlreadyRentedException>();
+            outputPort.NotFoundMessage.Should().Be("Rental not found.");
             outputPort.StandardOutput.Should().BeNull();
-            rentalRepository.Rentals.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task ExecuteWhenRentalIsAlreadyReturnedThrowsDomainException()
+        {
+            var rentalRepository = new RentalRepositoryStub();
+            var vehicleRepository = new VehicleRepositoryStub();
+            var outputPort = new ReturnRentalOutputPortSpy();
+            var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
+            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, outputPort);
+            var rental = Rental.Create(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                "12345678A",
+                "Jane Doe",
+                clock.GetCurrentUtcDateTime());
+            rental.Return("12345678A", clock.GetCurrentUtcDateTime());
+            await rentalRepository.Add(rental);
+
+            Func<Task> act = () => useCase.Execute(new ReturnRentalInput(rental.Id, "12345678A"));
+
+            await act.Should().ThrowAsync<RentalAlreadyReturnedException>();
+            outputPort.StandardOutput.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task ExecuteWhenRentalBelongsToAnotherPersonThrowsDomainException()
+        {
+            var rentalRepository = new RentalRepositoryStub();
+            var vehicleRepository = new VehicleRepositoryStub();
+            var outputPort = new ReturnRentalOutputPortSpy();
+            var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
+            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, outputPort);
+            var rental = Rental.Create(
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                "12345678A",
+                "Jane Doe",
+                clock.GetCurrentUtcDateTime());
+            await rentalRepository.Add(rental);
+
+            Func<Task> act = () => useCase.Execute(new ReturnRentalInput(rental.Id, "87654321B"));
+
+            await act.Should().ThrowAsync<RentalDoesNotBelongToPersonException>();
+            outputPort.StandardOutput.Should().BeNull();
         }
 
         private static Vehicle CreateVehicle(string vin)
@@ -119,13 +127,13 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
             }
         }
 
-        private sealed class RentVehicleOutputPortSpy : IRentVehicleOutputPort
+        private sealed class ReturnRentalOutputPortSpy : IReturnRentalOutputPort
         {
-            public RentVehicleOutput StandardOutput { get; private set; }
+            public ReturnRentalOutput StandardOutput { get; private set; }
 
             public string NotFoundMessage { get; private set; }
 
-            public void StandardHandle(RentVehicleOutput response)
+            public void StandardHandle(ReturnRentalOutput response)
             {
                 StandardOutput = response;
             }
@@ -173,11 +181,11 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
 
         private sealed class RentalRepositoryStub : IRentalRepository
         {
-            public List<Rental> Rentals { get; } = new();
+            private readonly List<Rental> rentals = new();
 
             public Task<bool> HasActiveRentalForPerson(string personDocumentId)
             {
-                var hasActiveRental = Rentals.Exists(rental =>
+                var hasActiveRental = rentals.Exists(rental =>
                     rental.PersonDocumentId == personDocumentId && rental.Status == RentalStatus.Active);
 
                 return Task.FromResult(hasActiveRental);
@@ -185,13 +193,13 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
 
             public Task Add(Rental rental)
             {
-                Rentals.Add(rental);
+                rentals.Add(rental);
                 return Task.CompletedTask;
             }
 
             public Task<Rental> GetById(Guid rentalId)
             {
-                return Task.FromResult(Rentals.Find(rental => rental.Id == rentalId));
+                return Task.FromResult(rentals.Find(rental => rental.Id == rentalId));
             }
 
             public Task Update(Rental rental)

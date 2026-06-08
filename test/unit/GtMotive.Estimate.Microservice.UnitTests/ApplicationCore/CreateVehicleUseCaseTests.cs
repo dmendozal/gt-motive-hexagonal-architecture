@@ -10,7 +10,7 @@ using GtMotive.Estimate.Microservice.Domain.Vehicles.Enums;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.ValueObjects;
 using Xunit;
 
-namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
+namespace GtMotive.Estimate.Microservice.UnitTests.ApplicationCore
 {
     public sealed class CreateVehicleUseCaseTests
     {
