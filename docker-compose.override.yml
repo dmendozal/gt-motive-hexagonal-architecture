@@ -4,7 +4,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Infrastructure__Provider: Mongo
-      MongoDb__ConnectionString: mongodb://mongodb:27017
+      MongoDb__ConnectionString: mongodb://mongodb:27017/?replicaSet=rs0
       MongoDb__MongoDbDatabaseName: estimate
     ports:
       - "8080:8080"

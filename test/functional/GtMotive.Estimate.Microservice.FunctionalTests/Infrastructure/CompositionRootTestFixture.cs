@@ -32,8 +32,9 @@ namespace GtMotive.Estimate.Microservice.FunctionalTests.Infrastructure
         public async Task InitializeAsync()
         {
             mongoDbContainer = new MongoDbBuilder()
-                .WithUsername(string.Empty)
-                .WithPassword(string.Empty)
+                .WithUsername("functionaltests")
+                .WithPassword("functionaltests")
+                .WithReplicaSet("rs0")
                 .Build();
 
             await mongoDbContainer.StartAsync().ConfigureAwait(false);

@@ -14,11 +14,14 @@ namespace GtMotive.Estimate.Microservice.Infrastructure.Vehicles
     {
         private const string CollectionName = "vehicles";
         private readonly IMongoCollection<VehiclePersistenceModel> _collection;
+        private readonly MongoSessionContext _sessionContext;
 
-        public MongoVehicleRepository(MongoService mongoService)
+        public MongoVehicleRepository(MongoService mongoService, MongoSessionContext sessionContext)
         {
             ArgumentNullException.ThrowIfNull(mongoService);
+            ArgumentNullException.ThrowIfNull(sessionContext);
 
+            _sessionContext = sessionContext;
             _collection = mongoService.Database.GetCollection<VehiclePersistenceModel>(CollectionName);
 
             var vinIndex = new CreateIndexModel<VehiclePersistenceModel>(
@@ -34,18 +37,37 @@ namespace GtMotive.Estimate.Microservice.Infrastructure.Vehicles
 
         public async Task<bool> ExistsByVin(Vin vin)
         {
-            var exists = await _collection.Find(document => document.Vin == vin.Value).AnyAsync();
+            ArgumentNullException.ThrowIfNull(vin);
+
+            var session = _sessionContext.CurrentSession;
+            var filter = Builders<VehiclePersistenceModel>.Filter.Eq(static document => document.Vin, vin.Value);
+            var exists = session is null ?
+                await _collection.Find(filter).AnyAsync() :
+                await _collection.Find(session, filter).AnyAsync();
+
             return exists;
         }
 
         public Task Add(Vehicle vehicle)
         {
-            return _collection.InsertOneAsync(VehiclePersistenceModel.FromDomain(vehicle));
+            ArgumentNullException.ThrowIfNull(vehicle);
+
+            var session = _sessionContext.CurrentSession;
+            var document = VehiclePersistenceModel.FromDomain(vehicle);
+
+            return session is null ?
+                _collection.InsertOneAsync(document) :
+                _collection.InsertOneAsync(session, document);
         }
 
         public async Task<Vehicle> GetById(Guid vehicleId)
         {
-            var document = await _collection.Find(document => document.Id == vehicleId).FirstOrDefaultAsync();
+            var session = _sessionContext.CurrentSession;
+            var filter = Builders<VehiclePersistenceModel>.Filter.Eq(static document => document.Id, vehicleId);
+            var document = session is null ?
+                await _collection.Find(filter).FirstOrDefaultAsync() :
+                await _collection.Find(session, filter).FirstOrDefaultAsync();
+
             return document?.ToDomain();
         }
 
@@ -53,13 +75,23 @@ namespace GtMotive.Estimate.Microservice.Infrastructure.Vehicles
         {
             ArgumentNullException.ThrowIfNull(vehicle);
 
+            var session = _sessionContext.CurrentSession;
             var filter = Builders<VehiclePersistenceModel>.Filter.Eq(static document => document.Id, vehicle.Id.Value);
-            return _collection.ReplaceOneAsync(filter, VehiclePersistenceModel.FromDomain(vehicle));
+            var document = VehiclePersistenceModel.FromDomain(vehicle);
+
+            return session is null ?
+                _collection.ReplaceOneAsync(filter, document) :
+                _collection.ReplaceOneAsync(session, filter, document);
         }
 
         public async Task<IReadOnlyCollection<Vehicle>> GetAvailable()
         {
-            var documents = await _collection.Find(static document => document.Status == VehicleStatus.Available).ToListAsync();
+            var session = _sessionContext.CurrentSession;
+            var filter = Builders<VehiclePersistenceModel>.Filter.Eq(static document => document.Status, VehicleStatus.Available);
+            var documents = session is null ?
+                await _collection.Find(filter).ToListAsync() :
+                await _collection.Find(session, filter).ToListAsync();
+
             IReadOnlyCollection<Vehicle> availableVehicles = documents.ConvertAll(static document => document.ToDomain());
             return availableVehicles;
         }

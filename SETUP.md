@@ -22,6 +22,8 @@ The repository includes a Docker Compose setup that starts:
 - `host` on `http://localhost:8080`
 - `mongodb` on `localhost:27017`
 
+MongoDB runs as a single-node replica set because the application uses Mongo transactions for multi-aggregate operations.
+
 Steps:
 
 1. Start Docker Desktop.
@@ -39,7 +41,7 @@ The host reads these settings from `docker-compose.override.yml`:
 
 - `ASPNETCORE_ENVIRONMENT=Development`
 - `Infrastructure__Provider=Mongo`
-- `MongoDb__ConnectionString=mongodb://mongodb:27017`
+- `MongoDb__ConnectionString=mongodb://mongodb:27017/?replicaSet=rs0`
 - `MongoDb__MongoDbDatabaseName=estimate`
 
 ## Run from Visual Studio
@@ -61,14 +63,14 @@ dotnet test ../test/infrastructure/GtMotive.Estimate.Microservice.Infrastructure
 dotnet test ../test/functional/GtMotive.Estimate.Microservice.FunctionalTests/GtMotive.Estimate.Microservice.FunctionalTests.csproj --no-restore
 ```
 
-Functional tests use Testcontainers and require Docker running locally. They start a real MongoDB container and exercise the real HTTP host.
+Functional tests use Testcontainers and require Docker running locally. They start a real MongoDB container as a single-node replica set and exercise the real HTTP host.
 
 ## Inspect MongoDB
 
 Connect MongoDB Compass to:
 
 ```text
-mongodb://localhost:27017
+mongodb://localhost:27017/?directConnection=true
 ```
 
 The application database is `estimate`.

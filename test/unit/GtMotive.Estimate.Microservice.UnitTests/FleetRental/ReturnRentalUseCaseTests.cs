@@ -5,6 +5,7 @@ using FluentAssertions;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.ApplicationCore.Rentals.ReturnRental;
 using GtMotive.Estimate.Microservice.Domain.Exceptions;
+using GtMotive.Estimate.Microservice.Domain.Interfaces;
 using GtMotive.Estimate.Microservice.Domain.Rentals.AggregateRoots;
 using GtMotive.Estimate.Microservice.Domain.Rentals.Enums;
 using GtMotive.Estimate.Microservice.Domain.Vehicles.AggregateRoots;
@@ -23,7 +24,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
             var vehicleRepository = new VehicleRepositoryStub();
             var outputPort = new ReturnRentalOutputPortSpy();
             var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
-            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, outputPort);
+            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, new UnitOfWorkStub(), outputPort);
             var vehicle = CreateVehicle("VIN-001");
             vehicle.Rent();
             await vehicleRepository.Add(vehicle);
@@ -50,7 +51,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
             var vehicleRepository = new VehicleRepositoryStub();
             var outputPort = new ReturnRentalOutputPortSpy();
             var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
-            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, outputPort);
+            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, new UnitOfWorkStub(), outputPort);
 
             await useCase.Execute(new ReturnRentalInput(Guid.NewGuid(), "12345678A"));
 
@@ -65,7 +66,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
             var vehicleRepository = new VehicleRepositoryStub();
             var outputPort = new ReturnRentalOutputPortSpy();
             var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
-            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, outputPort);
+            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, new UnitOfWorkStub(), outputPort);
             var rental = Rental.Create(
                 Guid.NewGuid(),
                 Guid.NewGuid(),
@@ -88,7 +89,7 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
             var vehicleRepository = new VehicleRepositoryStub();
             var outputPort = new ReturnRentalOutputPortSpy();
             var clock = new ClockStub(new DateTime(2026, 6, 7, 10, 0, 0, DateTimeKind.Utc));
-            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, outputPort);
+            var useCase = new ReturnRentalUseCase(rentalRepository, vehicleRepository, clock, new UnitOfWorkStub(), outputPort);
             var rental = Rental.Create(
                 Guid.NewGuid(),
                 Guid.NewGuid(),
@@ -141,6 +142,19 @@ namespace GtMotive.Estimate.Microservice.UnitTests.FleetRental
             public void NotFoundHandle(string message)
             {
                 NotFoundMessage = message;
+            }
+        }
+
+        private sealed class UnitOfWorkStub : IUnitOfWork
+        {
+            public async Task Execute(Func<Task> operation)
+            {
+                await operation();
+            }
+
+            public Task<int> Save()
+            {
+                return Task.FromResult(0);
             }
         }
 

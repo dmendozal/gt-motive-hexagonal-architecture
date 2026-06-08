@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 
 namespace GtMotive.Estimate.Microservice.Domain.Interfaces
 {
@@ -7,6 +8,13 @@ namespace GtMotive.Estimate.Microservice.Domain.Interfaces
     /// </summary>
     public interface IUnitOfWork
     {
+        /// <summary>
+        /// Executes an operation inside a unit of work.
+        /// </summary>
+        /// <param name="operation">The operation to execute.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        Task Execute(Func<Task> operation);
+
         /// <summary>
         /// Applies all database changes.
         /// </summary>

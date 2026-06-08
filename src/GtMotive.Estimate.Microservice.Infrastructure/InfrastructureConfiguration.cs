@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.Domain.Interfaces;
+using GtMotive.Estimate.Microservice.Infrastructure.InMemory;
 using GtMotive.Estimate.Microservice.Infrastructure.Interfaces;
 using GtMotive.Estimate.Microservice.Infrastructure.Logging;
 using GtMotive.Estimate.Microservice.Infrastructure.MongoDb;
@@ -27,11 +28,14 @@ namespace GtMotive.Estimate.Microservice.Infrastructure
             if (provider == InfrastructureProvider.Mongo)
             {
                 services.AddSingleton<MongoService>();
+                services.AddSingleton<MongoSessionContext>();
+                services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
                 services.AddSingleton<IVehicleRepository, MongoVehicleRepository>();
                 services.AddSingleton<IRentalRepository, MongoRentalRepository>();
             }
             else if (provider == InfrastructureProvider.InMemory)
             {
+                services.AddScoped<IUnitOfWork, InMemoryUnitOfWork>();
                 services.AddSingleton<IVehicleRepository, InMemoryVehicleRepository>();
                 services.AddSingleton<IRentalRepository, InMemoryRentalRepository>();
             }

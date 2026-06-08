@@ -21,6 +21,8 @@ namespace GtMotive.Estimate.Microservice.FunctionalTests.Infrastructure
             services.AddScoped(typeof(IAppLogger<>), typeof(LoggerAdapter<>));
             services.AddSingleton<IClock, SystemClock>();
             services.AddSingleton<MongoService>();
+            services.AddSingleton<MongoSessionContext>();
+            services.AddScoped<IUnitOfWork, MongoUnitOfWork>();
             services.AddSingleton<IVehicleRepository, MongoVehicleRepository>();
             services.AddSingleton<IRentalRepository, MongoRentalRepository>();
 

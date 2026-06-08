@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.ApplicationCore.UseCases;
+using GtMotive.Estimate.Microservice.Domain.Interfaces;
 
 namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.ReturnRental
 {
@@ -14,11 +15,13 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.ReturnRental
     /// <param name="rentalRepository">The rental repository.</param>
     /// <param name="vehicleRepository">The vehicle repository.</param>
     /// <param name="clock">The clock.</param>
+    /// <param name="unitOfWork">The unit of work.</param>
     /// <param name="outputPort">The output port.</param>
     public sealed class ReturnRentalUseCase(
         IRentalRepository rentalRepository,
         IVehicleRepository vehicleRepository,
         IClock clock,
+        IUnitOfWork unitOfWork,
         IReturnRentalOutputPort outputPort) : IUseCase<ReturnRentalInput>
     {
         /// <summary>
@@ -37,18 +40,24 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.ReturnRental
                 return;
             }
 
-            var returnedAt = clock.GetCurrentUtcDateTime();
-            rental.Return(input.PersonDocumentId, returnedAt);
-
-            var vehicle = await vehicleRepository.GetById(rental.VehicleId);
-            if (vehicle is not null)
+            ReturnRentalOutput output = null;
+            await unitOfWork.Execute(async () =>
             {
-                vehicle.MakeAvailable();
-                await vehicleRepository.Update(vehicle);
-            }
+                var returnedAt = clock.GetCurrentUtcDateTime();
+                rental.Return(input.PersonDocumentId, returnedAt);
 
-            await rentalRepository.Update(rental);
-            outputPort.StandardHandle(new ReturnRentalOutput(rental.Id, rental.VehicleId, returnedAt));
+                var vehicle = await vehicleRepository.GetById(rental.VehicleId);
+                if (vehicle is not null)
+                {
+                    vehicle.MakeAvailable();
+                    await vehicleRepository.Update(vehicle);
+                }
+
+                await rentalRepository.Update(rental);
+                output = new ReturnRentalOutput(rental.Id, rental.VehicleId, returnedAt);
+            });
+
+            outputPort.StandardHandle(output);
         }
     }
 }

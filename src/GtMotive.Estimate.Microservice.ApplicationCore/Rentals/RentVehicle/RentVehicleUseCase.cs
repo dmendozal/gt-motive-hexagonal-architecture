@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using GtMotive.Estimate.Microservice.ApplicationCore.Ports;
 using GtMotive.Estimate.Microservice.ApplicationCore.UseCases;
 using GtMotive.Estimate.Microservice.Domain.Exceptions;
+using GtMotive.Estimate.Microservice.Domain.Interfaces;
 using GtMotive.Estimate.Microservice.Domain.Rentals.AggregateRoots;
 
 namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.RentVehicle
@@ -16,11 +17,13 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.RentVehicle
     /// <param name="vehicleRepository">The vehicle repository.</param>
     /// <param name="rentalRepository">The rental repository.</param>
     /// <param name="clock">The clock.</param>
+    /// <param name="unitOfWork">The unit of work.</param>
     /// <param name="outputPort">The output port.</param>
     public sealed class RentVehicleUseCase(
         IVehicleRepository vehicleRepository,
         IRentalRepository rentalRepository,
         IClock clock,
+        IUnitOfWork unitOfWork,
         IRentVehicleOutputPort outputPort) : IUseCase<RentVehicleInput>
     {
         /// <summary>
@@ -39,27 +42,34 @@ namespace GtMotive.Estimate.Microservice.ApplicationCore.Rentals.RentVehicle
                 return;
             }
 
-            if (await rentalRepository.HasActiveRentalForPerson(input.PersonDocumentId))
+            RentVehicleOutput output = null;
+            await unitOfWork.Execute(async () =>
             {
-                throw new PersonAlreadyHasActiveRentalException();
-            }
+                if (await rentalRepository.HasActiveRentalForPerson(input.PersonDocumentId))
+                {
+                    throw new PersonAlreadyHasActiveRentalException();
+                }
 
-            vehicle.Rent();
+                vehicle.Rent();
 
-            var rental = Rental.Create(
-                Guid.NewGuid(),
-                vehicle.Id.Value,
-                input.PersonDocumentId,
-                input.PersonName,
-                clock.GetCurrentUtcDateTime());
-            await vehicleRepository.Update(vehicle);
-            await rentalRepository.Add(rental);
+                var rental = Rental.Create(
+                    Guid.NewGuid(),
+                    vehicle.Id.Value,
+                    input.PersonDocumentId,
+                    input.PersonName,
+                    clock.GetCurrentUtcDateTime());
 
-            outputPort.StandardHandle(new RentVehicleOutput(
-                rental.Id,
-                rental.VehicleId,
-                rental.PersonDocumentId,
-                rental.RentedAt));
+                await vehicleRepository.Update(vehicle);
+                await rentalRepository.Add(rental);
+
+                output = new RentVehicleOutput(
+                    rental.Id,
+                    rental.VehicleId,
+                    rental.PersonDocumentId,
+                    rental.RentedAt);
+            });
+
+            outputPort.StandardHandle(output);
         }
     }
 }
