@@ -6,6 +6,8 @@
     <ProjectTypeGuids>{E53339B2-1760-4266-BE6C-1B52D14E0F37}</ProjectTypeGuids>
     <ProjectVersion>2.1</ProjectVersion>
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
+    <DockerServiceName>host</DockerServiceName>
+    <DockerServiceUrl>http://localhost:8080/swagger</DockerServiceUrl>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>

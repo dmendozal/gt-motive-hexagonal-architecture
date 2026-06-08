@@ -37,6 +37,12 @@ If you prefer the CLI:
 docker compose up -d
 ```
 
+After the stack starts, open Swagger at:
+
+```text
+http://localhost:8080/swagger
+```
+
 The host reads these settings from `docker-compose.override.yml`:
 
 - `ASPNETCORE_ENVIRONMENT=Development`
@@ -50,8 +56,11 @@ The host reads these settings from `docker-compose.override.yml`:
 2. Set the startup project to **Docker Compose**.
 3. Press `F5` or `Run`.
 4. Visual Studio will start MongoDB and the API together.
+5. The Docker Compose project is configured to open `http://localhost:8080/swagger`.
 
 If Docker Compose does not appear as a startup option, reload the solution and ensure Docker support is enabled in the IDE.
+
+Visual Studio stores the selected startup project in the local `.suo` file, so this repository cannot reliably force Docker Compose as the default startup project for every developer. Select **docker-compose** once after opening the solution.
 
 ## Run Tests
 
