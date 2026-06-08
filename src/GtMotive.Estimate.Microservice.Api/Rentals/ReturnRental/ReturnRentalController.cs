@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using GtMotive.Estimate.Microservice.Api.Common;
-using GtMotive.Estimate.Microservice.ApplicationCore.Rentals.ReturnRental;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,11 +13,10 @@ namespace GtMotive.Estimate.Microservice.Api.Rentals.ReturnRental
     /// <remarks>
     /// Initializes a new instance of the <see cref="ReturnRentalController"/> class.
     /// </remarks>
-    /// <param name="returnRentalUseCase">The return rental use case.</param>
-    /// <param name="presenter">The return rental presenter.</param>
+    /// <param name="mediator">The mediator.</param>
     [ApiController]
     [Route("rentals/{rentalId:guid}/return")]
-    public sealed class ReturnRentalController(ReturnRentalUseCase returnRentalUseCase, ReturnRentalPresenter presenter) : ControllerBase
+    public sealed class ReturnRentalController(IMediator mediator) : ControllerBase
     {
         /// <summary>
         /// Returns a rented fleet vehicle.
@@ -33,7 +32,8 @@ namespace GtMotive.Estimate.Microservice.Api.Rentals.ReturnRental
         {
             ArgumentNullException.ThrowIfNull(request);
 
-            await returnRentalUseCase.Execute(new ReturnRentalInput(rentalId, request.PersonDocumentId));
+            request.RentalId = rentalId;
+            var presenter = await mediator.Send(request);
             return presenter.ActionResult;
         }
     }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using GtMotive.Estimate.Microservice.Api.Common;
-using GtMotive.Estimate.Microservice.ApplicationCore.Vehicles.CreateVehicle;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -13,11 +13,10 @@ namespace GtMotive.Estimate.Microservice.Api.Vehicles.CreateVehicle
     /// <remarks>
     /// Initializes a new instance of the <see cref="CreateVehicleController"/> class.
     /// </remarks>
-    /// <param name="createVehicleUseCase">The create vehicle use case.</param>
-    /// <param name="presenter">The create vehicle presenter.</param>
+    /// <param name="mediator">The mediator.</param>
     [ApiController]
     [Route("vehicles")]
-    public sealed class CreateVehicleController(CreateVehicleUseCase createVehicleUseCase, CreateVehiclePresenter presenter) : ControllerBase
+    public sealed class CreateVehicleController(IMediator mediator) : ControllerBase
     {
         /// <summary>
         /// Creates a fleet vehicle.
@@ -32,13 +31,7 @@ namespace GtMotive.Estimate.Microservice.Api.Vehicles.CreateVehicle
         {
             ArgumentNullException.ThrowIfNull(request);
 
-            var input = new CreateVehicleInput(
-                request.Vin,
-                request.Brand,
-                request.Model,
-                request.ManufacturingDate);
-
-            await createVehicleUseCase.Execute(input);
+            var presenter = await mediator.Send(request);
             return presenter.ActionResult;
         }
     }

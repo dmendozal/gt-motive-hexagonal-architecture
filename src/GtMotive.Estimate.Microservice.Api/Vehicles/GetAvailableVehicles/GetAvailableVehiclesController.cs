@@ -1,5 +1,5 @@
 ﻿using System.Threading.Tasks;
-using GtMotive.Estimate.Microservice.ApplicationCore.Vehicles.GetAvailableVehicles;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,13 +11,10 @@ namespace GtMotive.Estimate.Microservice.Api.Vehicles.GetAvailableVehicles
     /// <remarks>
     /// Initializes a new instance of the <see cref="GetAvailableVehiclesController"/> class.
     /// </remarks>
-    /// <param name="getAvailableVehiclesUseCase">The get available vehicles use case.</param>
-    /// <param name="presenter">The get available vehicles presenter.</param>
+    /// <param name="mediator">The mediator.</param>
     [ApiController]
     [Route("vehicles/available")]
-    public sealed class GetAvailableVehiclesController(
-        GetAvailableVehiclesUseCase getAvailableVehiclesUseCase,
-        GetAvailableVehiclesPresenter presenter) : ControllerBase
+    public sealed class GetAvailableVehiclesController(IMediator mediator) : ControllerBase
     {
         /// <summary>
         /// Gets available fleet vehicles.
@@ -27,7 +24,7 @@ namespace GtMotive.Estimate.Microservice.Api.Vehicles.GetAvailableVehicles
         [ProducesResponseType(typeof(GetAvailableVehiclesResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> Get()
         {
-            await getAvailableVehiclesUseCase.Execute(new GetAvailableVehiclesInput());
+            var presenter = await mediator.Send(new GetAvailableVehiclesRequest());
             return presenter.ActionResult;
         }
     }

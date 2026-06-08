@@ -1,13 +1,15 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using GtMotive.Estimate.Microservice.Api.UseCases;
+using MediatR;
 
 namespace GtMotive.Estimate.Microservice.Api.Rentals.RentVehicle
 {
     /// <summary>
     /// Request model for renting a vehicle.
     /// </summary>
-    public sealed class RentVehicleRequest
+    public sealed class RentVehicleRequest : IRequest<IWebApiPresenter>
     {
         /// <summary>
         /// Gets or sets the vehicle identifier.
